@@ -1,19 +1,34 @@
-simple-yarn-app
-===============
+# Homework 2, Big Data training, instruction:
 
-Simple YARN application to run n copies of a unix command - deliberately kept simple (with minimal error handling etc.)
+## 0 - Preparation:
 
-Usage:
-======
+### build the application
+>mvn clean package
 
-### Unmanaged mode
+### copy application jar to the following hdfs folder:
+>hadoop fs -copyFromLocal -f homework2-1.0.jar hdfs:///apps/homework2/
 
-$ bin/hadoop jar $HADOOP_YARN_HOME/share/hadoop/yarn/hadoop-yarn-applications-unmanaged-am-launcher-2.1.1-SNAPSHOT.jar Client -classpath simple-yarn-app-1.0-SNAPSHOT.jar -cmd "java com.hortonworks.simpleyarnapp.ApplicationMaster /bin/date 2"
+### copy initial input file to hdfs:
+> hdfs:///apps/homework2/user.profile.tags.us.txt
 
-### Managed mode
+### Classes PagesDownloader and WordsPerPageCounter could be run locally
+### just make sure your $HADOOP_HOME is set correctly
+### also create /apps/homework2/ with write permissions for the current user 
+### and put user.profile.tags.us.txt there  
 
-$ bin/hadoop fs -copyFromLocal simple-yarn-app-1.0-SNAPSHOT.jar /apps/simple/simple-yarn-app-1.0-SNAPSHOT.jar
+## 1 - Downloading data set:
+### After the first failed attempt, you need to open http://www.miniinthebox.com in a browser and enter the captcha, then run it again 
+> yarn jar homework2-1.0.jar com.epam.bigdata.homework2.Client com.epam.bigdata.homework2.PagesDownloader 1 hdfs:///apps/homework2/homework2-1.0.jar
 
-$ bin/hadoop jar simple-yarn-app-1.0-SNAPSHOT.jar com.hortonworks.simpleyarnapp.Client /bin/date 2 /apps/simple/simple-yarn-app-1.0-SNAPSHOT.jar
+### In case you could not obtain data set from http://www.miniinthebox.com
+> cd ./prepared_dataset
+
+> hadoop fs -copyFromLocal -f intermediate hdfs:///apps/homework2/
+
+## 2 - Word counting on a prepared data set 
+> yarn jar homework2-1.0.jar com.epam.bigdata.homework2.Client com.epam.bigdata.homework2.WordsPerPageCounter 1 hdfs:///apps/homework2/homework2-1.0.jar
+
+### it sould produce file hdfs:///apps/homework2/user.profile.tags.us.txt_out.txt
+
+## That's it!
   
-    
