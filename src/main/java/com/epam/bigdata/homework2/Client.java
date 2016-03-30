@@ -1,4 +1,4 @@
-package com.hortonworks.simpleyarnapp;
+package com.epam.bigdata.homework2;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +54,7 @@ public class Client {
         Collections.singletonList(
             "$JAVA_HOME/bin/java" +
             " -Xmx256M" +
-            " com.hortonworks.simpleyarnapp.ApplicationMaster" +
+            " com.epam.bigdata.homework2.ApplicationMasterAsync" +
             " " + command +
             " " + String.valueOf(n) +
             " 1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout" + 
@@ -66,7 +66,7 @@ public class Client {
     LocalResource appMasterJar = Records.newRecord(LocalResource.class);
     setupAppMasterJar(jarPath, appMasterJar);
     amContainer.setLocalResources(
-        Collections.singletonMap("simpleapp.jar", appMasterJar));
+        Collections.singletonMap("homework2.jar", appMasterJar));
 
     // Setup CLASSPATH for ApplicationMaster
     Map<String, String> appMasterEnv = new HashMap<String, String>();
@@ -76,12 +76,12 @@ public class Client {
     // Set up resource type requirements for ApplicationMaster
     Resource capability = Records.newRecord(Resource.class);
     capability.setMemory(256);
-    capability.setVirtualCores(1);
+    capability.setVirtualCores(4);
 
     // Finally, set-up ApplicationSubmissionContext for the application
     ApplicationSubmissionContext appContext = 
     app.getApplicationSubmissionContext();
-    appContext.setApplicationName("simple-yarn-app"); // application name
+    appContext.setApplicationName("homework2"); // application name
     appContext.setAMContainerSpec(amContainer);
     appContext.setResource(capability);
     appContext.setQueue("default"); // queue 

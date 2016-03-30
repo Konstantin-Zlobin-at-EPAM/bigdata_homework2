@@ -1,17 +1,21 @@
-package com.hortonworks.simpleyarnapp;
-
-import java.util.Collections;
-import java.util.List;
+package com.epam.bigdata.homework2;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
-import org.apache.hadoop.yarn.api.protocolrecords.AllocateResponse;
 import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.client.api.AMRMClient.ContainerRequest;
 import org.apache.hadoop.yarn.client.api.NMClient;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class implements a simple async app master.
@@ -20,11 +24,11 @@ import org.apache.hadoop.yarn.util.Records;
 public class ApplicationMasterAsync implements AMRMClientAsync.CallbackHandler {
     Configuration configuration;
     NMClient nmClient;
-    String command;
+    String mainClass;
     int numContainersToWaitFor;
 
-    public ApplicationMasterAsync(String command, int numContainersToWaitFor) {
-        this.command = command;
+    public ApplicationMasterAsync(String mainClass, int numContainersToWaitFor) {
+        this.mainClass = mainClass;
         configuration = new YarnConfiguration();
         this.numContainersToWaitFor = numContainersToWaitFor;
         nmClient = NMClient.createNMClient();
@@ -38,9 +42,21 @@ public class ApplicationMasterAsync implements AMRMClientAsync.CallbackHandler {
                 // Launch container by create ContainerLaunchContext
                 ContainerLaunchContext ctx =
                         Records.newRecord(ContainerLaunchContext.class);
+                Path jarPath = new Path("./homework2.jar");
+                LocalResource containerJobsJar = Records.newRecord(LocalResource.class);
+                FileStatus jarStat = FileSystem.get(configuration).getFileStatus(jarPath);
+                containerJobsJar.setResource(ConverterUtils.getYarnUrlFromPath(jarPath));
+                containerJobsJar.setSize(jarStat.getLen());
+                containerJobsJar.setTimestamp(jarStat.getModificationTime());
+                containerJobsJar.setType(LocalResourceType.FILE);
+                containerJobsJar.setVisibility(LocalResourceVisibility.APPLICATION);
+                ctx.setLocalResources(
+                        Collections.singletonMap("homework2.jar", containerJobsJar));
                 ctx.setCommands(
                         Collections.singletonList(
-                                command +
+                                "$JAVA_HOME/bin/java" +
+                                        " -jar ./homework2.jar" +
+                                        " " + mainClass +
                                         " 1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout" +
                                         " 2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr"
                         ));
@@ -111,8 +127,8 @@ public class ApplicationMasterAsync implements AMRMClientAsync.CallbackHandler {
 
         // Resource requirements for worker containers
         Resource capability = Records.newRecord(Resource.class);
-        capability.setMemory(128);
-        capability.setVirtualCores(1);
+        capability.setMemory(512);
+        capability.setVirtualCores(4);
 
         // Make container requests to ResourceManager
         for (int i = 0; i < numContainersToWaitFor; ++i) {
